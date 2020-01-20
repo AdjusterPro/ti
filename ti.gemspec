@@ -9,8 +9,4 @@ Gem::Specification.new do |s|
     s.files = ['lib/ti.rb']
     s.homepage = 'https://github.com/AdjusterPro/ti'
     s.license = 'MIT'
-
-    s.add_runtime_dependency 'open-uri'
-    s.add_runtime_dependency 'net/http'
-    s.add_runtime_dependency 'json'
 end
