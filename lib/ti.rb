@@ -1,4 +1,5 @@
 require 'open-uri'
+require 'net/http'
 require 'json'
 
 class TI
@@ -24,7 +25,7 @@ class TI
             /\?/.match(path) { |m| sep = '&' }
 
             path += "#{sep}cursor=#{cursor}" unless cursor.nil?
-            page = JSON.parse(self.api_get path)
+            page = self._get path
             if page.has_key?(api_obj)
                 objects += page[api_obj]
                 self.debug("page had #{page[api_obj].size} objects")
@@ -39,28 +40,44 @@ class TI
         objects
     end
 
+    def put(path, payload)
+        self.api_request(path) do |uri, headers|
+            headers['Content-Type'] = 'application/json'
+            req = Net::HTTP::Put.new(uri, headers)
+            req.body = payload.to_json
+
+            req.tap { |r| self.debug("PUT request: #{r.inspect}") }
+        end
+    end
+
+    def _get(path)
+      self.api_request(path) do |uri, headers|
+        Net::HTTP::Get.new(uri, headers)
+      end
+    end
+
     def api_request(path)
         url = "https://#{@subdomain}.thoughtindustries.com/incoming/v2/#{path}"
         headers = { 'Authorization' => "Bearer #{@api_key}" }
+
+        uri = URI(url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        req = yield(uri, headers)
+
         self.debug("requesting #{url}")
         begin
-            yield(url, headers)
-        rescue Exception => e
+            r = http.request(req)
+            r.value || JSON.parse(r.read_body)
+        rescue Net::HTTPServerException => e
             raise e unless /429/.match(e.message)
 
-            retry_after = e.io.meta['retry-after']
-            @logger.warn("TI#api_get received a 429, waiting #{retry_after} seconds (or 30) to retry")
+            retry_after = e.response['retry-after']
+            @logger.warn("TI#api_request received a 429, waiting #{retry_after || 30} seconds to retry")
 
             sleep (retry_after || '30').to_i
             retry
         end
     end
-
-    def api_get(path)
-        self.api_request(path) do |url, headers|
-          output = ''
-          open(url, headers) { |f| f.each_line { |line| output += line } }
-          output
-        end
-    end
+    
 end
