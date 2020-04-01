@@ -46,7 +46,7 @@ class TI
             req = Net::HTTP::Put.new(uri, headers)
             req.body = payload.to_json
 
-            req.tap { |r| self.debug("PUT request: #{r.inspect}") }
+            req
         end
     end
 
@@ -65,7 +65,7 @@ class TI
         http.use_ssl = true
         req = yield(uri, headers)
 
-        self.debug("requesting #{url}")
+        self.debug("requesting #{url} with #{req.method}")
         begin
             r = http.request(req)
             self.debug("limit stats: #{_limit(r).to_json}")
