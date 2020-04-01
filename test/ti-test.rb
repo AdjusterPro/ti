@@ -2,13 +2,11 @@ require 'digest'
 
 class TiTest < Test::Unit::TestCase
     def ti
-        @ti ||= TI.new(ENV['TI'], Logger.new(STDOUT), :debug => true)
+        @ti ||= TI.new(ENV['TI'] || raise("please define TI in env (s/b API key)"), Logger.new(STDOUT), :debug => true)
     end
 
     def test_429_handling
-      omit  
-      50.times { self.ti.get("users/26dd1069-db08-4ee4-8575-e4693218cdd1") }
-      50.times { |i| self.ti.put("users/26dd1069-db08-4ee4-8575-e4693218cdd1", {'email' => 'bdunlap@agentintellect.com', 'ref10' => "attempt_#{i}"}) }
+      20.times { self.ti.get("users/26dd1069-db08-4ee4-8575-e4693218cdd1") }
     end
 
     def test_read_profile_field

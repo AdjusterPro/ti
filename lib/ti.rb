@@ -70,12 +70,21 @@ class TI
             r = http.request(req)
             r.value || JSON.parse(r.read_body)
         rescue Net::HTTPServerException => e
+            now = Time.now.to_i
             raise e unless /429/.match(e.message)
 
-            retry_after = e.response['retry-after']
-            @logger.warn("TI#api_request received a 429, waiting #{retry_after || 30} seconds to retry")
+            limit = {
+              :limit => e.response['X-RateLimit-Limit'],
+              :remaining => e.response['X-RateLimit-Remaining'],
+              :reset => e.response['X-RateLimit-Reset'],
+              :retry_after => e.response['retry-after'],
+              :now => now,
+              :true_retry_after => e.response['X-RateLimit-Reset'].to_i - now
+            }
 
-            sleep (retry_after || '30').to_i
+            @logger.warn("TI#api_request received a 429, waiting #{limit[:retry_after] || 30} seconds to retry. Limit stats: #{limit.to_json}")
+
+            sleep (limit[:retry_after] || '30').to_i
             retry
         end
     end
