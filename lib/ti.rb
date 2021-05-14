@@ -41,13 +41,27 @@ class TI
     end
 
     def put(path, payload)
-        self.api_request(path) do |uri, headers|
-            headers['Content-Type'] = 'application/json'
-            req = Net::HTTP::Put.new(uri, headers)
-            req.body = payload.to_json
+      _write('put', path, payload)
+    end
 
-            req
+    def post(path, payload)
+      _write('post', path, payload)
+    end
+
+    def _write(type, path, payload)
+      self.api_request(path) do |uri, headers|
+        headers['Content-Type'] = 'application/json'
+        if type == 'put'
+          req = Net::HTTP::Put.new(uri, headers)
+        elsif type == 'post'
+          req = Net::HTTP::Post.new(uri, headers)
+        else
+          raise("Don't know how to do a #{type} request")
         end
+        req.body = payload.to_json
+
+        req
+      end
     end
 
     def _get(path)
