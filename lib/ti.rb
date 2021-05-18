@@ -2,6 +2,10 @@ require 'open-uri'
 require 'net/http'
 require 'json'
 
+def env(key)
+  ENV[key.to_s] || raise("please define #{key.to_s} in environment")
+end
+
 class TI
     def initialize(api_key, logger, options = {})
         @api_key = api_key
@@ -70,8 +74,14 @@ class TI
       end
     end
 
+    def sign(url)
+      hmac = OpenSSL::HMAC.hexdigest("SHA256", env(:TI_HMAC_KEY), "#{url}#{Time.now.to_i}")
+      sep = (url =~ /\?/) ? '&' : '?'
+      "#{url}#{sep}apsig=#{hmac}"
+    end
+
     def api_request(path)
-        url = "https://#{@subdomain}.thoughtindustries.com/incoming/v2/#{path}"
+        url = sign("https://#{@subdomain}.thoughtindustries.com/incoming/v2/#{path}")
         headers = { 'Authorization' => "Bearer #{@api_key}" }
 
         uri = URI(url)
