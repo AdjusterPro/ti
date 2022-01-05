@@ -19,9 +19,11 @@ class TI
       @logger.debug(msg) if @debug
     end
 
-    def get(url)
+    def get(url, settings={})
         cursor = nil
-        api_obj = url.split('/')[1]
+        api_obj = url.split('/').first
+        self.debug("api_obj: #{api_obj}")
+        pages_pulled = 0
         objects = []
         loop do
             path = url
@@ -35,9 +37,10 @@ class TI
                 self.debug("page had #{page[api_obj].size} objects")
             else
                 objects << page
-                self.debug("page had #{objects.size} objects")
+                self.debug("page had 1 object")
             end
-            break unless page.has_key?('pageInfo') and page['pageInfo']['hasMore']
+            pages_pulled += 1
+            break unless page.has_key?('pageInfo') and page['pageInfo']['hasMore'] and pages_pulled < (settings[:page_limit] || pages_pulled + 1)
             cursor = page['pageInfo']['cursor']
         end
 
@@ -62,7 +65,7 @@ class TI
         else
           raise("Don't know how to do a #{type} request")
         end
-        req.body = payload.to_json
+        req.body = payload.to_json.tap { |j| self.debug("#{type.upcase} payload: #{j}") }
 
         req
       end
@@ -93,7 +96,7 @@ class TI
         begin
             r = http.request(req)
             self.debug("limit stats: #{_limit(r).to_json}")
-            r.value || JSON.parse(r.read_body)
+            r.value || JSON.parse(r.read_body).tap { |b| self.debug("parsed response body: #{b}") }
         rescue Net::HTTPServerException => e
             raise e unless /429/.match(e.message)
 

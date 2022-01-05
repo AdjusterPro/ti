@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
     s.name = 'ti'
-    s.version = '0.2.0'
-    s.date = '2021-05-18'
+    s.version = '0.2.1'
+    s.date = '2022-01-05'
     s.summary = 'Micro-SDK for TI'
     s.description = 'Facilitates use of https://api.thoughtindustries.com'
     s.authors = ['Ben Dunlap']
