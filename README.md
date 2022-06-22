@@ -1,4 +1,4 @@
-# domo_bi
+# ti
 
 * https://github.com/AdjusterPro/ti
 
