@@ -21,7 +21,7 @@ class TI
 
   def get(url, settings={})
     cursor = nil
-    api_obj = url.split('/').first
+    api_obj = settings[:api_obj] || url.split('/').first
     debug("api_obj: #{api_obj}")
     pages_pulled = 0
     objects = []
